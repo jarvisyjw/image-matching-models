@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument(
         "--num-iters",
         type=int,
-        default=1,
+        default=5,
         help="number of interations to run benchmark and average over",
     )
     args = parser.parse_args()
@@ -114,7 +114,7 @@ def main(args):
     elif args.task == "test":
         with open("test_results.txt", "w") as f:
             test_str = "Matcher, Passing Tests, Error (px)"
-            f.write(test_str + "\n" + '-'* 40 +'\n')
+            f.write(test_str + "\n" + "-" * 40 + "\n")
             tqdm.write(test_str)
 
             for model in tqdm(args.models):
