@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import numpy as np
 import os
 import torchvision.transforms as tfm
 import py3_wget
@@ -74,6 +75,9 @@ class Dust3rMatcher(BaseMatcher):
             conf_i = confidence_masks[i].cpu().numpy()
             pts2d_list.append(xy_grid(*imgs[i].shape[:2][::-1])[conf_i])  # imgs[i].shape[:2] = (H, W)
             pts3d_list.append(pts3d[i].detach().cpu().numpy()[conf_i])
+        # return if there is no 3d points found on either one of the image
+        if pts3d_list[0].shape[0] == 0 or pts3d_list[1].shape[0] == 0:
+            return np.empty((0,2)), np.empty((0,2)), None, None, None, None
         reciprocal_in_P2, nn2_in_P1, _ = find_reciprocal_matches(*pts3d_list)
 
         mkpts1 = pts2d_list[1][reciprocal_in_P2]
