@@ -5,18 +5,12 @@ but the matches are not used or displayed. This approach allows us to use the sa
 for keypoint extraction without implementing separate functions for each method.
 """
 
-import sys
 import argparse
-import matplotlib
-from glob import glob
 from pathlib import Path
 
 from matching import get_matcher, available_models
+from matching.utils import get_default_device
 from matching.viz import plot_kpts
-
-# This is to be able to use matplotlib also without a GUI
-if not hasattr(sys, "ps1"):
-    matplotlib.use("Agg")
 
 
 def main(args):
@@ -26,12 +20,15 @@ def main(args):
     # Choose a matcher
     matcher = get_matcher(args.matcher, device=args.device, max_num_keypoints=args.n_kpts)
 
-    # Find all jpg, jpeg and png images within args.input_dir
-    images_paths = (
-        glob(f"{args.input_dir}/**/*.jpg", recursive=True)
-        + glob(f"{args.input_dir}/**/*.jpeg", recursive=True)
-        + glob(f"{args.input_dir}/**/*.png", recursive=True)
-    )
+    if args.input.is_file():
+        images_paths = [args.input]
+    else:
+        # Find all jpg, jpeg and png images within args.input_dir
+        images_paths = args.input.rglob("*.(jpg|png|jpeg)")
+        images_paths = (
+            list(args.input.rglob("*.jpg")) + list(args.input.rglob("*.jpeg")) + list(args.input.rglob("*.png"))
+        )
+
     for i, img_path in enumerate(images_paths):
 
         image = matcher.load_image(img_path, resize=image_size)
@@ -68,13 +65,13 @@ def parse_args():
     # Hyperparameters shared by all methods:
     parser.add_argument("--im_size", type=int, default=512, help="resize img to im_size x im_size")
     parser.add_argument("--n_kpts", type=int, default=2048, help="max num keypoints")
-    parser.add_argument("--device", type=str, default="cuda", choices=["cpu", "cuda"])
+    parser.add_argument("--device", type=str, default=get_default_device(), choices=["cpu", "cuda"])
     parser.add_argument("--no_viz", action="store_true", help="avoid saving visualizations")
     parser.add_argument(
-        "--input_dir",
-        type=str,
-        default="assets/example_pairs",
-        help="path to directory with images (the search is recursive over jpg and png images)",
+        "--input",
+        type=Path,
+        default=[Path("assets/example_pairs")],
+        help="path to image or directory with images (the search is recursive over jpg and png images)",
     )
     parser.add_argument("--out_dir", type=Path, default=None, help="path where outputs are saved")
 

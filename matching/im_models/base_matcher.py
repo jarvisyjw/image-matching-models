@@ -9,6 +9,7 @@ from typing import Tuple
 
 from matching.utils import to_normalized_coords, to_px_coords, to_numpy
 
+
 class BaseMatcher(torch.nn.Module):
     """
     This serves as a base class for all matchers. It provides a simple interface
@@ -26,6 +27,7 @@ class BaseMatcher(torch.nn.Module):
         super().__init__()
         self.device = device
 
+        self.skip_ransac = False
         self.ransac_iters = kwargs.get("ransac_iters", BaseMatcher.DEFAULT_RANSAC_ITERS)
         self.ransac_conf = kwargs.get("ransac_conf", BaseMatcher.DEFAULT_RANSAC_CONF)
         self.ransac_reproj_thresh = kwargs.get("ransac_reproj_thresh", BaseMatcher.DEFAULT_REPROJ_THRESH)
@@ -86,6 +88,23 @@ class BaseMatcher(torch.nn.Module):
         assert inliers_mask.shape[1] == 1
         inliers_mask = inliers_mask[:, 0]
         return H, inliers_mask.astype(bool)
+    
+    @staticmethod
+    def find_fundamentalMat(
+        points1: np.ndarray | torch.Tensor,
+        points2: np.ndarray | torch.Tensor,
+        reproj_thresh: int = DEFAULT_REPROJ_THRESH,
+        num_iters: int = DEFAULT_RANSAC_ITERS,
+        ransac_conf: float = DEFAULT_RANSAC_CONF,
+    ):
+        assert points1.shape == points2.shape
+        assert points1.shape[1] == 2
+        points1, points2 = to_numpy(points1), to_numpy(points2)
+
+        F, inliers_mask = cv2.findFundamentalMat(points1, points2, cv2.FM_RANSAC, reproj_thresh, ransac_conf, num_iters)
+        assert inliers_mask.shape[1] == 1
+        inliers_mask = inliers_mask[:, 0]
+        return F, inliers_mask.astype(bool)
 
     def process_matches(
         self, matched_kpts0: np.ndarray, matched_kpts1: np.ndarray
@@ -99,16 +118,25 @@ class BaseMatcher(torch.nn.Module):
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: Homography matrix from img0 to img1, inlier kpts in img0, inlier kpts in img1
         """
-        if len(matched_kpts0) < 4:
+        if len(matched_kpts0) < 4 or self.skip_ransac:
             return None, matched_kpts0, matched_kpts1
 
-        H, inliers_mask = self.find_homography(
+        # H, inliers_mask = self.find_homography(
+        #     matched_kpts0,
+        #     matched_kpts1,
+        #     self.ransac_reproj_thresh,
+        #     self.ransac_iters,
+        #     self.ransac_conf,
+        # )
+        
+        H, inliers_mask = self.find_fundamentalMat(
             matched_kpts0,
             matched_kpts1,
             self.ransac_reproj_thresh,
             self.ransac_iters,
             self.ransac_conf,
         )
+        
         inlier_kpts0 = matched_kpts0[inliers_mask]
         inlier_kpts1 = matched_kpts1[inliers_mask]
 

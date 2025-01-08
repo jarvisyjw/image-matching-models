@@ -4,19 +4,13 @@ detects keypoints, matches them, and performs RANSAC to find inliers. The result
 and metadata, are saved to the specified output directory.
 """
 
-import sys
 import torch
 import argparse
-import matplotlib
 from pathlib import Path
 
-from matching.utils import get_image_pairs_paths
+from matching.utils import get_image_pairs_paths, get_default_device
 from matching import get_matcher, available_models
 from matching.viz import plot_matches
-
-# This is to be able to use matplotlib also without a GUI
-if not hasattr(sys, "ps1"):
-    matplotlib.use("Agg")
 
 
 def main(args):
@@ -70,14 +64,16 @@ def parse_args():
     # Hyperparameters shared by all methods:
     parser.add_argument("--im_size", type=int, default=512, help="resize img to im_size x im_size")
     parser.add_argument("--n_kpts", type=int, default=2048, help="max num keypoints")
-    parser.add_argument("--device", type=str, default="cuda", choices=["cpu", "cuda"])
+    parser.add_argument("--device", type=str, default=get_default_device(), choices=["cpu", "cuda"])
     parser.add_argument("--no_viz", action="store_true", help="avoid saving visualizations")
 
     parser.add_argument(
         "--input",
-        type=str,
-        default="assets/example_pairs",
-        help="path to either (1) dir with dirs with image pairs or (2) txt file with two image paths per line",
+        type=Path,
+        nargs="+",  # Accept one or more arguments
+        default=[Path("assets/example_pairs")],
+        help="path to either (1) two image paths or (2) dir with two images or (3) dir with dirs with image pairs or "
+        "(4) txt file with two image paths per line",
     )
     parser.add_argument("--out_dir", type=Path, default=None, help="path where outputs are saved")
 
