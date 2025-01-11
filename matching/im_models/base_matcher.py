@@ -118,7 +118,7 @@ class BaseMatcher(torch.nn.Module):
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: Homography matrix from img0 to img1, inlier kpts in img0, inlier kpts in img1
         """
-        if len(matched_kpts0) < 4 or self.skip_ransac:
+        if len(matched_kpts0) < 8 or self.skip_ransac:
             return None, matched_kpts0, matched_kpts1
 
         # H, inliers_mask = self.find_homography(
@@ -129,7 +129,7 @@ class BaseMatcher(torch.nn.Module):
         #     self.ransac_conf,
         # )
         
-        H, inliers_mask = self.find_fundamentalMat(
+        F, inliers_mask = self.find_fundamentalMat(
             matched_kpts0,
             matched_kpts1,
             self.ransac_reproj_thresh,
@@ -140,7 +140,7 @@ class BaseMatcher(torch.nn.Module):
         inlier_kpts0 = matched_kpts0[inliers_mask]
         inlier_kpts1 = matched_kpts1[inliers_mask]
 
-        return H, inlier_kpts0, inlier_kpts1
+        return F, inlier_kpts0, inlier_kpts1
 
     def preprocess(self, img: torch.Tensor) -> Tuple[torch.Tensor, Tuple[int, int]]:
         """Image preprocessing for each matcher. Some matchers require grayscale, normalization, etc.
