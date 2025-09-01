@@ -1,6 +1,6 @@
 # Image Matching Models (IMM)
 
-A unified API for quickly and easily trying 29 (and growing!) image matching models.
+A unified API for quickly and easily trying 37 (and growing!) image matching models.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexstoken/image-matching-models/blob/main/demo.ipynb)
 
@@ -55,7 +55,7 @@ If you want to to install from source (easiest to edit, use `benchmark.py`, `dem
 ```bash
 git clone --recursive https://github.com/alexstoken/image-matching-models
 cd image-matching-models
-pip install .
+pip install -e .
 ```
 Some models (`omniglue`, LoFTR family) require one-off dependencies (`tensorflow`, `pytorch-lightning`), which are not included in the default list. To install these, use 
 ```
@@ -123,7 +123,7 @@ To extract keypoints and descriptions (when available) from a single image, use 
 from matching import get_matcher
 
 device = 'cuda' # 'cpu'
-matcher = get_matcher('superglue', device=device)  # Choose any of our ~30+ matchers listed below
+matcher = get_matcher('xfeat', device=device)  # Choose any of our ~30+ matchers listed below
 img_size = 512 # optional
 
 img = matcher.load_image('assets/example_pairs/outdoor/montmartre_close.jpg', resize=img_size)
@@ -142,16 +142,17 @@ python main_extractor.py --matcher sift-lg --device cpu --out_dir output_sift-lg
 ## Available Models
 You can choose any of the following methods (input to `get_matcher()`):
 
-**Dense**: ```roma, tiny-roma, dust3r, mast3r```
+**Dense**: ```roma, tiny-roma, dust3r, mast3r, minima-roma```
 
-**Semi-dense**: ```loftr, eloftr, se2loftr, aspanformer, matchformer, xfeat-star```
+**Semi-dense**: ```loftr, eloftr, se2loftr, xoftr, minima-loftr, aspanformer, matchformer, xfeat-star, xfeat-star-steerers[-perm/-learned], edm, rdd-star```
 
-**Sparse**: ```[sift, superpoint, disk, aliked, dedode, doghardnet, gim, xfeat]-lg, dedode, steerers, dedode-kornia, [sift, orb, doghardnet]-nn, patch2pix, superglue, r2d2, d2net,  gim-dkm, xfeat, omniglue, [dedode, xfeat, aliked]-subpx, [sift, superpoint]-sphereglue```
+**Sparse**: ```[sift, superpoint, disk, aliked, dedode, doghardnet, gim, xfeat]-lg, dedode, steerers, affine-steerers, xfeat-steerers[-perm/learned], dedode-kornia, [sift, orb, doghardnet]-nn, patch2pix, superglue, r2d2, d2net,  gim-dkm, xfeat, omniglue, [dedode, xfeat, aliked]-subpx, [sift, superpoint]-sphereglue, minima-splg, liftfeat, rdd-[sparse,lg, aliked], ripe, lisrd```
+
 
 > [!TIP]
-> You can pass a list of matchers, i.e. `get_matcher([xfeat, tiny-roma])` to run both matchers and concatenate their keypoints. 
+> You can pass a list of matchers, i.e. `get_matcher([xfeat, tiny-roma])` to run both matchers and concatenate their keypoints.
 
-All the matchers can run on GPU, and most of them can run both on GPU or CPU. A few can't run on CPU.
+Most matchers can run on CPU and GPU. MPS is not tested. See [Model Details](#model-details) for runtimes. If a runtime is ❌, it means that model can not run on that device. 
 
 ## Model Details
 > [!IMPORTANT]
@@ -159,16 +160,24 @@ All the matchers can run on GPU, and most of them can run both on GPU or CPU. A 
 
 | Model | Code | Paper | GPU Runtime (s/img)| CPU Runtime (s/img) |
 |-------|------|-------|----|----|
+| RIPE (ICCV '25) | [Official](https://github.com/fraunhoferhhi/RIPE) | [arxiv](https://arxiv.org/abs/2507.04839) |  | 2.772
+| RDD (CVPR '25) | [Official](https://github.com/xtcpete/rdd?tab=readme-ov-file)| [Project page](https://xtcpete.github.io/rdd/) | | 6.73 / 7.85 / 9.18 / 15.75 
+| EDM (arXiv ''25) | [Official](https://github.com/chicleee/EDM) | [arxiv](https://arxiv.org/abs/2503.05122)| | 0.493
+| LiftFeat (ICRA '25) | [Official](https://github.com/lyp-deeplearning/LiftFeat) | [arxiv](https://www.arxiv.org/abs/2505.03422) | 0.514   | 2.577
+| MINIMA (CVPR '25)| [Official](https://github.com/LSXI7/MINIMA/tree/main) | [arxiv](https://arxiv.org/abs/2412.19412) | | 11.32 / 7.355 / 96.6 / 0.561
+| XoFTR (CVPR IMW '24) | [Official](https://github.com/OnderT/XoFTR?tab=readme-ov-file) | [pdf](https://openaccess.thecvf.com/content/CVPR2024W/IMW/papers/Tuzcuoglu_XoFTR_Cross-modal_Feature_Matching_Transformer_CVPRW_2024_paper.pdf) | | 8.954 |
+| Affine Steerers (ECCV '24) | [Official](https://github.com/georg-bn/affine-steerers?tab=readme-ov-file) | [arxiv](https://arxiv.org/abs/2408.14186)| 0.677 | ❌ |
 | Keypt2Subpx* (ECCV '24) | [Official](https://github.com/KimSinjeong/keypt2subpx) | [arxiv](https://arxiv.org/abs/2407.11668)| 0.055 /0.164 / 0.033 / 0.291  | -- |
-| MASt3R (ArXiv '24) | [Official](https://github.com/naver/mast3r?tab=readme-ov-file) | [arxiv](https://arxiv.org/abs/2406.09756) | 0.699 | -- |
+| MASt3R (ECCV '24) | [Official](https://github.com/naver/mast3r?tab=readme-ov-file) | [arxiv](https://arxiv.org/abs/2406.09756) | 0.699 | 22.27 |
 | Efficient-LoFTR (CVPR '24) | [Official](https://github.com/zju3dv/efficientloftr) | [pdf](https://zju3dv.github.io/efficientloftr/files/EfficientLoFTR.pdf) | 0.1026 | 2.117 |
 | OmniGlue (CVPR '24) | [Official](https://github.com/google-research/omniglue) | [arxiv](https://arxiv.org/abs/2405.12979) | ❌ | 6.351 |
+| xFeat-Steerers | [Official](https://colab.research.google.com/drive/1ZFifMqUAOQhky1197-WAquEV1K-LhDYP?usp=sharing) | [Discussion](https://github.com/verlab/accelerated_features/issues/32) | 0.037 | 0.124 | 
 | xFeat (CVPR '24) | [Official](https://github.com/verlab/accelerated_features) | [arxiv](https://arxiv.org/abs/2404.19174) | 0.027 | 0.048 | 
 | GIM (ICLR '24) | [Official](https://github.com/xuelunshen/gim?tab=readme-ov-file) | [arxiv](https://arxiv.org/abs/2402.11095)  |  0.077 (+LG) /  1.627 (+DKMv3) | 5.321 (+LG) /  20.301 (+DKMv3) |
 | RoMa / Tiny-RoMa (CVPR '24) | [Official](https://github.com/Parskatt/RoMa) | [arxiv](https://arxiv.org/abs/2305.15404) |  0.453 / 0.0456 |  18.950 |
 | DUSt3R (CVPR '24) | [Official](https://github.com/naver/dust3r) | [arxiv](https://arxiv.org/abs/2312.14132) | 3.639 |  26.813 |
 | DeDoDe (3DV '24) | [Official](https://github.com/Parskatt/DeDoDe/tree/main) | [arxiv](https://arxiv.org/abs/2308.08479) |  0.311 (+MNN)/ 0.218 (+LG) | ❌ |
-| Steerers (CVPR '24) | [Official](https://github.com/georg-bn/rotation-steerers) | [arxiv](https://arxiv.org/abs/2312.02152) | 0.150 | ❌ |
+| Steerers (CVPR '24) | [Official](https://github.com/georg-bn/rotation-steerers) | [arxiv](https://arxiv.org/abs/2312.02152) | 0.150 | 26.425 |
 | SphereGlue* (CVPRW '23) | [Official](https://github.com/vishalsharbidar/SphereGlue) | [pdf](https://openaccess.thecvf.com/content/CVPR2023W/IMW/papers/Gava_SphereGlue_Learning_Keypoint_Matching_on_High_Resolution_Spherical_Images_CVPRW_2023_paper.pdf) | 0.548 / 0.070  | 0.804 / 7.407  |
 | LightGlue* (ICCV '23) | [Official](https://github.com/cvg/LightGlue) | [arxiv](https://arxiv.org/abs/2306.13643) | 0.417 / 0.093 / 0.184 / 0.128 | 2.828 / 8.852 / 8.100 / 8.128 |
 | SE2-LoFTR (CVPRW '22) | [Official](https://github.com/georg-bn/se2-loftr) | [arxiv](https://arxiv.org/abs/2204.10144) | 0.133 | 2.378 | 
@@ -176,6 +185,7 @@ All the matchers can run on GPU, and most of them can run both on GPU or CPU. A 
 | Matchformer (ACCV '22) | [Official](https://github.com/jamycheung/MatchFormer) | [arxiv](https://arxiv.org/abs/2203.09645) | 0.232 | 6.101 | 
 | LoFTR (CVPR '21) | [Official](https://github.com/zju3dv/LoFTR) / [Kornia](https://kornia.readthedocs.io/en/stable/feature.html#kornia.feature.LoFTR) | [arxiv](https://arxiv.org/abs/2104.00680) | 0.722 | 2.36 | 
 | Patch2Pix (CVPR '21) | [Official](https://github.com/GrumpyZhou/patch2pix)  / [IMT](https://github.com/GrumpyZhou/image-matching-toolbox) | [arxiv](https://arxiv.org/abs/2012.01909) | 0.145 | 4.97 | 
+|LISRD (ECCV '20) | [Official](https://github.com/rpautrat/LISRD) | [arxiv](https://arxiv.org/abs/2007.08988) | 12.319 / 3.823/ 12.305 | 0.187 / 1.191 / 0.165
 | SuperGlue (CVPR '20) | [Official](https://github.com/magicleap/SuperGluePretrainedNetwork) / [IMT](https://github.com/GrumpyZhou/image-matching-toolbox/blob/main/immatch/modules/superglue.py) | [arxiv](https://arxiv.org/abs/1911.11763)  | 0.0894 | 2.178 | 
 | R2D2 (NeurIPS '19) | [Official](https://github.com/naver/r2d2) / [IMT](https://github.com/GrumpyZhou/image-matching-toolbox/blob/main/immatch/modules/r2d2.py) | [arxiv](https://arxiv.org/abs/1906.06195) | 0.429 | 6.79 | 
 | D2Net (CVPR '19) | [Official](https://github.com/mihaidusmanu/d2-net) / [IMT](https://github.com/GrumpyZhou/image-matching-toolbox/blob/main/immatch/modules/d2net.py) | [arxiv](https://arxiv.org/abs/1905.03561) | 0.600 | 1.324 | 
@@ -188,12 +198,15 @@ Our implementation of Patch2Pix (+ Patch2PixSuperGlue), R2D2, and D2Net are base
 
 Runtime benchmark is the average of 5 iterations over the 5 pairs of examples in the `assets/example_pairs` folder at image size 512x512. Benchmark is done using `benchmark.py` on an NVIDIA RTX A4000 GPU. Results rounded to the hundredths place.
 
-\* `SphereGlue` model runtimes are listed in the order: SIFT, SuperPoint
+\* `SphereGlue` model runtimes are listed in the order: `SIFT, SuperPoint`
 
-\* `LightGlue` model runtimes are listed in the order: SIFT, SuperPoint, Disk, ALIKED
+\* `LightGlue` model runtimes are listed in the order: `SIFT, SuperPoint, Disk, ALIKED`
 
+\* `Keypt2Subpx` model runtimes are listed in the order: `superpoint-lg, aliked-lg, xfeat, dedode`
 
-\* `Keypt2Subpx` model runtimes are listed in the order: superpoint-lg, aliked-lg, xfeat, dedode
+\* `MINIMA` model runtimes are listed in the order: `superpoint-lg, LoFTR, RoMa (large), RoMa (tiny)`
+
+\* `RDD` model runtimes are listed in the order: `sparse, star (semi-dense), lg, aliked`
 ##
 
 ### Adding a new method
@@ -202,7 +215,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
     
 > [!Note]  
-> This repo is optimized usability, but necessarily for speed. The idea is to use this repo to find the matcher that best suits your needs, and then use the original code to get the best out of it.
+> This repo is optimized for usability, not necessarily for speed or performance. Ideally you can use this repo to find the matcher that best suits your needs, and then use the original code (or a modified version of this code) to get maximize performance. Default hyperparameters used here **may not be optimal for your use case!**
 
     
 ### Acknowledgements
@@ -211,7 +224,7 @@ Special thanks to the authors of the respective works that are included in this 
 
 
 ## Cite
-This repo was created as part of the EarthMatch paper. Please consider citing EarthMatch work if this repo is helpful to you!
+This repo was created as part of the EarthMatch paper. Please consider citing EarthMatch if this repo is helpful to you!
 
 ```
 @InProceedings{Berton_2024_EarthMatch,
