@@ -45,4 +45,28 @@
 	url = https://github.com/KimSinjeong/keypt2subpx.git
 [submodule "matching/third_party/SphereGlue"]
 	path = matching/third_party/SphereGlue
-	url = https://github.com/vishalsharbidar/SphereGlue
+	url = https://github.com/alexstoken/SphereGlue.git
+[submodule "matching/third_party/affine-steerers"]
+	path = matching/third_party/affine-steerers
+	url = https://github.com/georg-bn/affine-steerers.git
+[submodule "matching/third_party/XoFTR"]
+	path = matching/third_party/XoFTR
+	url = https://github.com/OnderT/XoFTR
+[submodule "matching/third_party/MINIMA"]
+	path = matching/third_party/MINIMA
+	url = https://github.com/LSXI7/MINIMA
+[submodule "matching/third_party/rdd"]
+	path = matching/third_party/rdd
+	url = https://github.com/xtcpete/rdd.git
+[submodule "matching/third_party/LiftFeat"]
+	path = matching/third_party/LiftFeat
+	url = https://github.com/lyp-deeplearning/LiftFeat.git
+[submodule "matching/third_party/EDM"]
+	path = matching/third_party/EDM
+	url = https://github.com/chicleee/EDM
+[submodule "matching/third_party/LISRD"]
+	path = matching/third_party/LISRD
+	url = https://github.com/rpautrat/LISRD.git
+[submodule "matching/third_party/RIPE"]
+	path = matching/third_party/RIPE
+	url = https://github.com/fraunhoferhhi/RIPE.git
