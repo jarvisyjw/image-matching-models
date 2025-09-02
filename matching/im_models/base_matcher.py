@@ -93,6 +93,23 @@ class BaseMatcher(torch.nn.Module):
         assert inliers_mask.shape[1] == 1
         inliers_mask = inliers_mask[:, 0]
         return H, inliers_mask.astype(bool)
+    
+    @staticmethod
+    def find_fundamentalMat(
+        points1: np.ndarray | torch.Tensor,
+        points2: np.ndarray | torch.Tensor,
+        reproj_thresh: int = DEFAULT_REPROJ_THRESH,
+        num_iters: int = DEFAULT_RANSAC_ITERS,
+        ransac_conf: float = DEFAULT_RANSAC_CONF,
+    ):
+        assert points1.shape == points2.shape
+        assert points1.shape[1] == 2
+        points1, points2 = to_numpy(points1), to_numpy(points2)
+
+        F, inliers_mask = cv2.findFundamentalMat(points1, points2, cv2.FM_RANSAC, reproj_thresh, ransac_conf, num_iters)
+        assert inliers_mask.shape[1] == 1
+        inliers_mask = inliers_mask[:, 0]
+        return F, inliers_mask.astype(bool)
 
     def process_matches(
         self, matched_kpts0: np.ndarray, matched_kpts1: np.ndarray
@@ -106,20 +123,29 @@ class BaseMatcher(torch.nn.Module):
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: Homography matrix from img0 to img1, inlier kpts in img0, inlier kpts in img1
         """
-        if len(matched_kpts0) < 4 or self.skip_ransac:
+        if len(matched_kpts0) < 8 or self.skip_ransac:
             return None, matched_kpts0, matched_kpts1
 
-        H, inliers_mask = self.find_homography(
+        # H, inliers_mask = self.find_homography(
+        #     matched_kpts0,
+        #     matched_kpts1,
+        #     self.ransac_reproj_thresh,
+        #     self.ransac_iters,
+        #     self.ransac_conf,
+        # )
+        
+        F, inliers_mask = self.find_fundamentalMat(
             matched_kpts0,
             matched_kpts1,
             self.ransac_reproj_thresh,
             self.ransac_iters,
             self.ransac_conf,
         )
+        
         inlier_kpts0 = matched_kpts0[inliers_mask]
         inlier_kpts1 = matched_kpts1[inliers_mask]
 
-        return H, inlier_kpts0, inlier_kpts1
+        return F, inlier_kpts0, inlier_kpts1
 
     def preprocess(self, img: torch.Tensor) -> Tuple[torch.Tensor, Tuple[int, int]]:
         """Image preprocessing for each matcher. Some matchers require grayscale, normalization, etc.
